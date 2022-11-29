@@ -1,5 +1,4 @@
 import asyncio 
-import random
 import sqlite3
 import os
 import datetime
@@ -472,17 +471,111 @@ async def venue(search):
     await homescreen(search)
 
 async def predict(search):
-    x=1
+    os.system('cls')
+    centre('=', '=')
+    conn = sqlite3.connect(str(search) + ".sqlite")
+    cur = conn.cursor()
+    
+    cur.execute('SELECT match FROM "table"')
+    matches = cur.fetchall()
+
+    team_list = []
+    for match in matches :
+        match = match[0] 
+        teams = str(match).split('vs')
+        for team in teams : 
+            team = team.strip()
+            if team not in team_list :
+                team_list.append(team)
+
+    centre('Select TEAM 1')
+    team_1 = ans_check(option_list=team_list)
+    team_list.remove(team_1)
+    os.system('cls')
+    centre('=', '=')
+    centre(f'TEAM 1 - {team_1}')
+
+    centre('Select TEAM 2')
+    team_2 = ans_check(option_list=team_list)
+ 
+    string = team_1 + ' vs ' + team_2
+
+    cur.execute(f'SELECT * FROM "table" WHERE "match" = "{string}"')
+    data1 = cur.fetchall()
+
+    string = team_2 + ' vs ' + team_1
+    
+    cur.execute(f'SELECT * FROM "table" WHERE "match" = "{string}"')
+    data2 = cur.fetchall()
+
+    for i in data2 : 
+        data1.append(i)
+
+    if data1 != [] :
+        os.system('cls')
+        for i in loading_list :
+            print(i,end='\r')
+            #await asyncio.sleep(2)
+        os.system('cls')
+        centre('=', '=')
+        team_1_wins = 0
+        team_2_wins = 0 
+        ties = 0 
+        for data in data1 :
+
+            winner = data[3] 
+
+            if (team_1 + " won") in winner :
+                team_1_wins += 1
+
+            elif (team_2 + " won") in winner :
+                team_2_wins += 1
+            
+            else : 
+                ties += 1
+
+        matches = len(data1) - ties 
+
+        win_per_1 = int((team_1_wins/matches)*100)
+        win_per_2 = int((team_2_wins/matches)*100)
+    else : 
+        win_per_1 = 50
+        win_per_2 = 50
+    centre(f'Win probability of {team_1} vs {team_2}')
+    win_str = win_per_1*"■" + win_per_2*"□"
+    centre(win_str)
+    gap = " "*(88 - len(team_1) - len(team_2))
+    matches_str = f"{team_1} ({win_per_1}%){gap}{team_2} ({win_per_2}%)"
+    centre(matches_str)
+    ans_check(option_list=['back'])
+    await homescreen(search)
 
 
 
 file = open("design.txt",encoding= "utf8")
 lines = file.readlines()
 file.close()
-    
+
+
+
+file = open("loading.txt", "r+",encoding='utf8')
+loading = file.readlines()
+file.close()
+loading_list = []
+string = ""
+for i in loading :
+    try : 
+        int(i.strip('\n'))
+        loading_list.append(string.rstrip("\n"))
+        string = ""
+    except :
+        gap = " "*(gap_len*2 - int((len(i))) - 50)
+        string += middle + "|" + " "*(50)  +  i.strip("\n") +  gap + "|\n"
+
+
+
 while True :
     os.system('cls')
-
     for i in  lines : 
         print(middle + i.strip('\n'))
     centre("Where do you wish to search ?")
@@ -491,3 +584,6 @@ while True :
         asyncio.run(homescreen(search))
     else :
         break
+
+    
+  
